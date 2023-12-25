@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import GUI from 'lil-gui'
-import { BasicParticles } from './particles'
+import { BasicParticles, GalaxyParticles } from './particles'
 
 /**
  * Base
@@ -46,7 +46,8 @@ const textureLoader = new THREE.TextureLoader()
 // scene.add(particles)
 
 
-const particles = new BasicParticles()
+const particles = new GalaxyParticles(gui, scene)
+particles.buildUI(gui)
 
 scene.add(particles.particles)
 
@@ -84,6 +85,7 @@ window.addEventListener('resize', () => {
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
 camera.position.z = 3
+camera.position.y = 3
 scene.add(camera)
 
 // Controls
@@ -122,9 +124,8 @@ const tick = () => {
 tick()
 
 
-gui.add(particlesMaterial, 'size').min(0).max(2).step(2 / 10000)
-gui.add(globals, 'particleCount').min(100).max(40000).onChange(() => {
-})
+// gui.add(globals, 'particleCount').min(100).max(40000).onChange(() => {
+// })
 
 
 
