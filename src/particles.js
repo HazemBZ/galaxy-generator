@@ -142,7 +142,7 @@ class GalaxyParticles extends BasicParticles {
     constructor(gui, scene) {
 
         super(gui)
-        this.particleCount = 20000
+        this.particleCount = 10000
         this.particlesMaterial.alphaMap = null
         this.size = 0.05
         this.radius = 4.22
@@ -153,27 +153,59 @@ class GalaxyParticles extends BasicParticles {
         this.insideColor = '#ff6030'
         this.outsideColor = '#1b3984'
         this.scene = scene
+        this.importedSettings = ''
+        this.gui = gui
 
         this.regenerateGeometry(
         )
 
 
-    }
+        const configs = {
+            normal: () => {
+                this.size = 0.05
+                this.radius = 4.22
+                this.randomness = 0.2988
+                this.branches = 3
+                this.randomnessPower = 4.44
+                this.spin = 1
 
+            },
+            weird: () => {
+                this.branches = 4
+                this.spin = 0.22
+                this.randomnessPower = 0
+            },
+            weird2: () => {
+                this.branches = 4
+                this.spin = 0.22
+                this.randomness = 0.756
+                this.randomnessPower = 0
+            },
+            weird3: () => {
+                this.size = 0.05
+                this.radius = 0.69
+                this.randomness = 1.0264
+                this.randomnessPower = 0
+                this.spin = 10
+                this.branches = 4
+            }
 
-
-    galxyAnimate(elapsedTime) {
-        for (let i = 0; i < this.particleCount; i++) {
-            const i3 = i * 3
-
-            // this.particlePositions[i3] = Math.
         }
+
+        configs.normal()
+
+
     }
 
-    regenerateGeometry = () => {
+
+
+    regenerateGeometry = (elapsedTime, animate = false) => {
         // super.regenerateGeometry()
         this.particlePositions = new Float32Array(this.particleCount * 3)
         this.particleColors = new Float32Array(this.particleCount * 3)
+
+
+
 
         console.log('regen')
         for (let i = 0; i < this.particleCount; i++) {
@@ -188,28 +220,21 @@ class GalaxyParticles extends BasicParticles {
             const varianceY = Math.pow(Math.random(), this.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * this.randomness * radius
             const varianceZ = Math.pow(Math.random(), this.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * this.randomness * radius
 
-
+            const timeFactor = elapsedTime && animate ? elapsedTime : 0
 
             const shapes = {
                 circle: () => {
                     this.particlePositions[i3] = radius * Math.cos(branchAngle + i)
                     this.particlePositions[i3 + 1] = 0
                     this.particlePositions[i3 + 2] = radius * Math.sin(branchAngle + i)
+
+
                 },
                 branches: () => {
-                    this.particlePositions[i3] = radius * (Math.cos(branchAngle + spinAngle)) + varianceX
+                    this.particlePositions[i3] = radius * (Math.cos((branchAngle + spinAngle + timeFactor))) + varianceX
                     this.particlePositions[i3 + 1] = 0 + varianceY
-                    this.particlePositions[i3 + 2] = radius * (Math.sin(branchAngle + spinAngle)) + varianceZ
+                    this.particlePositions[i3 + 2] = radius * (Math.sin(branchAngle + spinAngle + timeFactor)) + varianceZ
 
-                    const colorInside = new THREE.Color(this.insideColor)
-                    const colorOutside = new THREE.Color(this.outsideColor)
-
-                    const mixedColor = colorInside.clone()
-                    mixedColor.lerp(colorOutside, radius / this.radius)
-
-                    this.particleColors[i3] = mixedColor.r
-                    this.particleColors[i3 + 1] = mixedColor.g
-                    this.particleColors[i3 + 2] = mixedColor.b
                 }
 
             }
@@ -217,7 +242,18 @@ class GalaxyParticles extends BasicParticles {
             shapes.branches()
 
 
+            /**
+             * Colors
+             */
+            const colorInside = new THREE.Color(this.insideColor)
+            const colorOutside = new THREE.Color(this.outsideColor)
 
+            const mixedColor = colorInside.clone()
+            mixedColor.lerp(colorOutside, radius / this.radius)
+
+            this.particleColors[i3] = mixedColor.r
+            this.particleColors[i3 + 1] = mixedColor.g
+            this.particleColors[i3 + 2] = mixedColor.b
 
 
             this.particlesGeometry.setAttribute(
@@ -236,16 +272,40 @@ class GalaxyParticles extends BasicParticles {
     }
 
     spinAnimate(elapsedTime) {
-        this.particles.rotation.y += degToRad((Math.PI / 180) * 2 * elapsedTime)
         // this.regenerateGeometry()
         console.log('spin ' + elapsedTime)
 
     }
 
+    async exportSettings() {
+        console.log('Gui save',)
+        const settings = this.gui.save()
+        await navigator.clipboard.writeText(JSON.stringify(settings))
+        alert("Settings copied to clipboard")
+    }
 
+    importSettings = () => {
+        try {
+            const importedSettings = JSON.parse(this.importedSettings)
+
+            this.gui.load(importedSettings)
+
+            this.regenerateGeometry()
+
+            console.log(importedSettings)
+
+
+            // alert('imported settings ', importedSettings)
+
+        } catch (error) {
+            alert('error importing settings')
+        }
+
+    }
 
     buildUI(gui) {
         super.buildUI(gui)
+        this.gui = gui
         gui.add(this, 'radius')
             .min(0.01).max(20).step(0.01).onFinishChange(() => { console.log('change'); this.regenerateGeometry() })
         gui.add(this, 'randomness')
@@ -256,14 +316,17 @@ class GalaxyParticles extends BasicParticles {
             .min(0).max(10).onFinishChange(this.regenerateGeometry)
         gui.add(this, 'spin')
             .min(0).max(10).onFinishChange(this.regenerateGeometry)
+        gui.add(this, 'importSettings')
+        gui.add(this, 'importedSettings').name('settings')
+        gui.add(this, 'exportSettings')
+
 
 
     }
 
 
     tick(elapsedTime) {
-        // this.regenerateGeometry()
-        // this.spinAnimate(elapsedTime)
+        this.regenerateGeometry(elapsedTime, true)
     }
 }
 
