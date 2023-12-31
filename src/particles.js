@@ -155,6 +155,7 @@ class GalaxyParticles extends BasicParticles {
         this.scene = scene
         this.importedSettings = ''
         this.gui = gui
+        this.direction = 1
 
         this.regenerateGeometry(
         )
@@ -220,7 +221,7 @@ class GalaxyParticles extends BasicParticles {
             const varianceY = Math.pow(Math.random(), this.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * this.randomness * radius
             const varianceZ = Math.pow(Math.random(), this.randomnessPower) * (Math.random() < 0.5 ? 1 : - 1) * this.randomness * radius
 
-            const timeFactor = elapsedTime && animate ? elapsedTime : 0
+            const timeFactor = (elapsedTime && animate ? elapsedTime : 0)
 
             const shapes = {
                 circle: () => {
@@ -231,9 +232,9 @@ class GalaxyParticles extends BasicParticles {
 
                 },
                 branches: () => {
-                    this.particlePositions[i3] = radius * (Math.cos((branchAngle + spinAngle + timeFactor))) + varianceX
-                    this.particlePositions[i3 + 1] = 0 + varianceY
-                    this.particlePositions[i3 + 2] = radius * (Math.sin(branchAngle + spinAngle + timeFactor)) + varianceZ
+                    this.particlePositions[i3] = (radius * (Math.cos((branchAngle + spinAngle + timeFactor) * this.direction)) + varianceX)
+                    this.particlePositions[i3 + 1] = (0 + varianceY)
+                    this.particlePositions[i3 + 2] = (radius * (Math.sin((branchAngle + spinAngle + timeFactor) * this.direction)) + varianceZ)
 
                 }
 
@@ -303,6 +304,10 @@ class GalaxyParticles extends BasicParticles {
 
     }
 
+    changeDirection() {
+        this.direction *= -1
+    }
+
     buildUI(gui) {
         super.buildUI(gui)
         this.gui = gui
@@ -316,6 +321,7 @@ class GalaxyParticles extends BasicParticles {
             .min(0).max(10).onFinishChange(this.regenerateGeometry)
         gui.add(this, 'spin')
             .min(0).max(10).onFinishChange(this.regenerateGeometry)
+        gui.add(this, 'changeDirection')
         gui.add(this, 'importSettings')
         gui.add(this, 'importedSettings').name('settings')
         gui.add(this, 'exportSettings')
